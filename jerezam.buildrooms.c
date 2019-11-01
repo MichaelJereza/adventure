@@ -15,7 +15,8 @@ struct Room {
 // Returns true if all rooms have 3 to 6 outbound connections, false otherwise
 bool IsGraphFull(struct Room** all_rooms)  
 {
-  for(int i=0; i<7; i++){
+  int i;
+  for(i=0; i<7; i++){
     int c=all_rooms[i]->doors;
     if((c<3)||(c>6)){
       return false;
@@ -46,7 +47,8 @@ bool CanAddConnectionFrom(struct Room x)
 // Returns true if a connection from Room x to Room y already exists, false otherwise
 bool ConnectionAlreadyExists(struct Room* x, struct Room* y)
 {
-  for(int i = 0; i < x->doors; i++){
+  int i;
+  for(i = 0; i < x->doors; i++){
     if(x->connections[i]->name==y->name){
       return true;
     }
@@ -119,13 +121,15 @@ void asnRooms (struct Room** new_rooms) {
   };
   int picks = 10;
 
-  for(int i=0; i<7; i++){
+  int i;
+  for(i=0; i<7; i++){
     int r = ( rand() % picks );
     
     new_rooms[i]->name = names[r];
     new_rooms[i]->type = "MID_ROOM";
-
-    for( int j = r; j < picks; j++ ){
+    
+    int j;
+    for(j = r; j < picks; j++ ){
       names[j] = names[j+1];
     }
     new_rooms[i]->doors = 0;
@@ -140,7 +144,9 @@ void asnRooms (struct Room** new_rooms) {
 // Post: 7 files names ROOM_(1-7)
 void outputRooms (struct Room** final_rooms){
   char num;
-  for(int i = 0; i < 7; i++){
+  
+  int i;
+  for(i = 0; i < 7; i++){
     
     // Create directory
     int p = getpid();
@@ -166,7 +172,8 @@ void outputRooms (struct Room** final_rooms){
     fwrite(buffer, sizeof(char), strlen(buffer), output_file);
     
     // Write connections
-    for(int d = 1; d < final_rooms[i]->doors+1; d++){
+    int d;
+    for(d = 1; d < final_rooms[i]->doors+1; d++){
       num = d + '0';
       char* name = final_rooms[i]->connections[d-1]->name;
       strcpy(buffer, "CONNECTION "); 
@@ -187,7 +194,8 @@ void main () {
 
   // Generate Rooms
   srand(time(0));
-  for(int i = 0; i < 7; i++){
+  int i;
+  for(i = 0; i < 7; i++){
     graph[i]=malloc(sizeof(struct Room));
   }
   asnRooms(graph);
@@ -200,7 +208,7 @@ void main () {
 
   outputRooms(graph);
   // Free allocated memory
-  for(int i = 0; i < 7; i++){
+  for(i = 0; i < 7; i++){
     free(graph[i]);
   }
 }
