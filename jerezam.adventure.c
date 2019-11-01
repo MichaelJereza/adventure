@@ -58,8 +58,8 @@ struct Room** getRooms(){
     getNewestDir(directory);
     
     rooms = malloc(7*sizeof(struct Room*));
-
-    for(int i = 0; i < 7; i++){
+    int i;
+    for(i = 0; i < 7; i++){
         // Create memory for room[i]
         rooms[i] = malloc(sizeof(struct Room));
         rooms[i]->name = malloc(sizeof(char[8]));
@@ -81,7 +81,8 @@ struct Room** getRooms(){
         getline(&lineptr, &bfsz, room_stream);
 
         // Find newline and add null terminator
-        for(int newline = 0; newline < bfsz; newline++){
+        int newline;
+        for(newline = 0; newline < bfsz; newline++){
             if (lineptr[newline]=='\n'){
                 lineptr[newline]='\0';
             }
@@ -97,7 +98,8 @@ struct Room** getRooms(){
     // Rooms allocated and have names
     
     // Now add connections and types
-    for(int c = 0; c < 7; c++){
+    int c;
+    for(c = 0; c < 7; c++){
         // Directory path into buffer
         memset (buffer, '\0', sizeof(buffer));
         strcpy(buffer, directory);
@@ -121,7 +123,8 @@ struct Room** getRooms(){
             // If line is a connection
             if(con_num!=0){
                 // For end of format to end of name
-                for(int iter = 14; iter < strlen(lineptr); iter++){
+                int iter;
+                for(iter = 14; iter < strlen(lineptr); iter++){
                     // If iter is last char
                     // Append \0
                     if(iter == strlen(lineptr)-1){
@@ -139,7 +142,8 @@ struct Room** getRooms(){
                 strcpy(name, buffer);
                 
                 // For connections, if name, pointer to room in sought
-                for(int room_seek = 0; room_seek < 7; room_seek++){
+                int room_seek;
+                for(room_seek = 0; room_seek < 7; room_seek++){
                     if(strcmp(rooms[room_seek]->name, name)==0){
                         sought = rooms[room_seek];
                         room_seek=7;
@@ -152,7 +156,8 @@ struct Room** getRooms(){
             }
             // If line is type
             else if(lineptr[5]=='T'){
-                for(int typ_iter = 11; typ_iter <= strlen(lineptr); typ_iter++){
+                int typ_iter;
+                for(typ_iter = 11; typ_iter <= strlen(lineptr); typ_iter++){
                     // Append \0
                     if(typ_iter == strlen(lineptr)){
                         buffer[typ_iter-11] = '\0';
@@ -174,7 +179,8 @@ struct Room** getRooms(){
 
 // Deallocates memory used by room array.
 void freeRooms(struct Room** rooms){
-    for(int i = 0; i < 7; i++){
+    int i;
+    for(i = 0; i < 7; i++){
      //   printf("%s, %s, %d, %s\n", rooms[i]->name, rooms[i]->connections[0]->name, rooms[i]->doors, rooms[i]->type);
         free(rooms[i]->name);
         free(rooms[i]->type);
@@ -187,7 +193,8 @@ void freeRooms(struct Room** rooms){
 void prompt(struct Room* location){
     printf("\nCURRENT LOCATION: %s\n", location->name);
     printf("POSSIBLE CONNECTIONS: ");
-    for(int d = 0; d < location->doors; d++){
+    int d;
+    for(d = 0; d < location->doors; d++){
         printf("%s", location->connections[d]->name);
         if(d == location->doors-1){
             printf(".\n");
@@ -216,7 +223,8 @@ char* getValidInput(struct Room* location){
         }
         else{
             bool huh = true;
-            for(int con = 0; con < location->doors; con++){
+            int con;
+            for(con = 0; con < location->doors; con++){
                 if(strcmp(buffer, location->connections[con]->name)==0){
                     valid = true;
                     huh = false;
@@ -246,7 +254,8 @@ void play(struct Room** map){
             getTime();
         }
         else{
-            for(int con = 0; con < cur_room->doors; con++){
+            int con;
+            for(con = 0; con < cur_room->doors; con++){
                 if(strcmp(choice, cur_room->connections[con]->name)==0){
                     cur_room = cur_room->connections[con];
                     history = realloc(history, (steps+1)*sizeof(history[8]));
@@ -258,7 +267,8 @@ void play(struct Room** map){
         free(choice);
     }
     printf("\nYOU HAVE FOUND THE END ROOM. CONGRATULATIONS!\nYOU TOOK %d STEPS. YOUR PATH TO VICTORY WAS:\n", steps);
-    for(int s = 0; s < steps; s++){
+    int s;
+    for(s = 0; s < steps; s++){
         printf("%s\n", history[s]);
     }
     free(history);
