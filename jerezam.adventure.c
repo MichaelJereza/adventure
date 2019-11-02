@@ -78,6 +78,7 @@ struct Room** getRooms(){
 
         // Set position of beginning of name
         int pos = fseek(room_stream, 11, SEEK_CUR);
+        // if(lineptr)
         getline(&lineptr, &bfsz, room_stream);
 
         // Find newline and add null terminator
@@ -90,10 +91,7 @@ struct Room** getRooms(){
         // Add name to rooms[i]
         // and free lineptr
         strcpy(rooms[i]->name, lineptr);
-        bfsz = 0;
         fclose(room_stream);
-        free(lineptr);
-
     }
     // Rooms allocated and have names
     
@@ -172,8 +170,8 @@ struct Room** getRooms(){
             }  
         }
         fclose(room_stream);
-        free(lineptr);
     }
+    free(lineptr);
     return rooms;
 }
 
