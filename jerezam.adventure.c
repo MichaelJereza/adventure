@@ -6,6 +6,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <pthread.h>
+#include <time.h>
 
 struct Room {
     char* name;
@@ -13,6 +14,13 @@ struct Room {
     struct Room* connections[6];
     char* type;
 };
+
+// thread 
+pthread_t time_thread;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER; 
+// mutex
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
 
 // Searches through directory, finding newest one
 // Citing code from Lec 1.6 slide 6
@@ -179,7 +187,6 @@ struct Room** getRooms(){
 void freeRooms(struct Room** rooms){
     int i;
     for(i = 0; i < 7; i++){
-     //   printf("%s, %s, %d, %s\n", rooms[i]->name, rooms[i]->connections[0]->name, rooms[i]->doors, rooms[i]->type);
         free(rooms[i]->name);
         free(rooms[i]->type);
         free(rooms[i]);
@@ -187,30 +194,35 @@ void freeRooms(struct Room** rooms){
     free(rooms);
     return;
 }
-
-void prompt(struct Room* location){
-    printf("\nCURRENT LOCATION: %s\n", location->name);
-    printf("POSSIBLE CONNECTIONS: ");
-    int d;
-    for(d = 0; d < location->doors; d++){
-        printf("%s", location->connections[d]->name);
-        if(d == location->doors-1){
-            printf(".\n");
-        }
-        else{
-            printf(", ");
+// Prompt for input, 
+// if location_prompt=1 location and connections printed
+void prompt(struct Room* location, int location_prompt){
+    if(location_prompt==1){
+        printf("\nCURRENT LOCATION: %s\n", location->name);
+        printf("POSSIBLE CONNECTIONS: ");
+        int d;
+        for(d = 0; d < location->doors; d++){
+            printf("%s", location->connections[d]->name);
+            if(d == location->doors-1){
+                printf(".\n");
+            }
+            else{
+                printf(", ");
+            }
         }
     }
+
     printf("WHERE TO? >");
     return;
 }
-
-char* getValidInput(struct Room* location){
+// Gets string from stdin
+// Assures returned string is room name or time
+char* getValidInput(struct Room* location, int prompt_setting){
     char* buffer = NULL;
     size_t bfsz = 0;
     bool valid = false;
     do{
-        prompt(location);         
+        prompt(location, prompt_setting);         
 
         getline(&buffer, &bfsz, stdin);
         buffer[strlen(buffer)-1]='\0';
@@ -231,14 +243,36 @@ char* getValidInput(struct Room* location){
             }
             if(huh){
                 printf("\nHUH? I DON’T UNDERSTAND THAT ROOM. TRY AGAIN.\n");
+                prompt_setting = 1;
             }
         }
     }while(!valid);
     return buffer;
 }
 
-void getTime(){
+// Prints formatted date string and writes to currentTime.txt
+void* getTime(){
+    
+    // Wait for stdin "time"
+    pthread_cond_wait(&cond, &lock);
+    
+    // Citing strftime manual
+    time_t t = time(NULL);
+    struct tm* tmp;
+    tmp = localtime(&t);
+    char buffer[60];
+    memset (buffer, '\0', sizeof(buffer)); // Initializes string with null terminator
+    
+    // Formatted date into buffer
+    strftime(buffer, sizeof(buffer),"%l:%M%P, %A, %B %d, %Y",tmp);
+    printf("\n%s\n\n", buffer);
+    
+    // Open output file and write buffer
+    FILE* stream = fopen("currentTime.txt", "w+");
+    fwrite(buffer, sizeof(char), strlen(buffer), stream);
+    fclose(stream);
 
+    return 0;
 }
 
 void play(struct Room** map){
@@ -246,11 +280,21 @@ void play(struct Room** map){
     char** history = NULL;
     int steps = 0;
     char* choice = NULL;
+    int loc_prompt = 1;
+    // Loops until cur_room is the end
     while(strcmp(cur_room->type, "END_ROOM")!=0){
-        choice = getValidInput(cur_room);
+        choice = getValidInput(cur_room, loc_prompt);
+        // If time is input
         if(strcmp(choice, "time")==0){
-            getTime();
+            loc_prompt = 0;
+            pthread_cond_signal(&cond);
+            pthread_join(time_thread, NULL);
+           
+            // Recreate thread
+            pthread_create( &time_thread, NULL, getTime, NULL );
         }
+        // Add name to history and increment steps
+        // Change cur_room to name
         else{
             int con;
             for(con = 0; con < cur_room->doors; con++){
@@ -261,6 +305,7 @@ void play(struct Room** map){
                     steps++;
                 }
             }
+            loc_prompt = 1;
         }
         free(choice);
     }
@@ -274,7 +319,15 @@ void play(struct Room** map){
 
 void main(){
     struct Room** the_rooms = getRooms();
+    
+    // Create pthread
+    pthread_create( &time_thread, NULL, getTime, NULL );
+
+    // Start the game
     play(the_rooms);
 
+    // Clean up
+    pthread_mutex_destroy(&lock);
     freeRooms(the_rooms);
+    return;
 }
